@@ -3,7 +3,7 @@
 // jChimp Configuration
 //
 // All you need is your API key, which could be found by
-// logging into your Mailchimp account and then going to 
+// logging into your Mailchimp account and then going to
 // Account Settings > Extras > API Keys. If you do not have
 // an API key, just go ahead and create one. Otherwise, all
 // you have to do is copy and past your API key below!

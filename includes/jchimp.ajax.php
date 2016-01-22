@@ -4,6 +4,7 @@ require_once dirname(__FILE__) . '/jchimp.config.php';
 require_once dirname(__FILE__) . '/jchimp.functions.php';
 require_once dirname(__FILE__) . '/jchimp.class.php';
 
+
 if ( ! empty( $_POST ) ) {
 
     // Lets make sure that the API key is defined before we proceed
@@ -16,7 +17,7 @@ if ( ! empty( $_POST ) ) {
 
     try {
         $mailchimp = new Mailchimp( trim( MC_API_KEY ) );
-    } catch ( Exception $e ) {            
+    } catch ( Exception $e ) {
         output_error_message( MC_CONNECTION_ERROR_MESSAGE );
     }
 
@@ -35,8 +36,8 @@ if ( ! empty( $_POST ) ) {
     if ( ! empty( $_POST['LIST_ID'] ) ) {
         $list_id = $_POST['LIST_ID'];
     } else {
-        if ( ! empty( $_POST['LIST_NAME'] ) ) {
 
+        if ( ! empty( $_POST['LIST_NAME'] ) ) {
             $get_lists = $mailchimp->lists->getList( array( 'list_name' => $_POST['LIST_NAME'] ) );
 
             if ( ! empty( $get_lists['data'] ) ) {
@@ -45,7 +46,7 @@ if ( ! empty( $_POST ) ) {
                         $list_id = $list['id'];
                     }
                 }
-            } 
+            }
 
             if ( ! isset( $list_id ) ) {
                 output_error_message( MC_LIST_NOT_FOUND_MESSAGE );
@@ -54,6 +55,8 @@ if ( ! empty( $_POST ) ) {
             output_error_message( MC_LIST_NOT_PROVIDED_MESSAGE );
         }
     }
+
+    $list_id = explode( ',', $list_id );
 
     // Time to get the subscribers name
 
@@ -99,18 +102,26 @@ if ( ! empty( $_POST ) ) {
 
     // It's now or never... lets attempt to subscribe to the list
 
-    try {            
-        $add_to_list = $mailchimp->lists->subscribe(
-            (string)    $list_id,
-            (array)     array( 'email' => $_POST['EMAIL'] ),
-            (array)     $merge_vars,
-            (string)    $_POST['EMAIL_TYPE'],
-            filter_var( $_POST['DOUBLE_OPTIN'], FILTER_VALIDATE_BOOLEAN ),
-            filter_var( $_POST['REPLACE_INTERESTS'], FILTER_VALIDATE_BOOLEAN ),
-            filter_var( $_POST['SEND_WELCOME'], FILTER_VALIDATE_BOOLEAN )
-        );
-    } catch ( Exception $e ) {
-        output_error_message( MC_DEFAULT_ERROR_MESSAGE );
+    if ( ! empty( $list_id ) && is_array( $list_id ) ) {
+
+        foreach ( $list_id as $lid ) {
+
+            try {
+                $add_to_list = $mailchimp->lists->subscribe(
+                    (string)    $lid,
+                    (array)     array( 'email' => $_POST['EMAIL'] ),
+                    (array)     $merge_vars,
+                    (string)    $_POST['EMAIL_TYPE'],
+                    filter_var( $_POST['DOUBLE_OPTIN'], FILTER_VALIDATE_BOOLEAN ),
+                    filter_var( $_POST['REPLACE_INTERESTS'], FILTER_VALIDATE_BOOLEAN ),
+                    filter_var( $_POST['SEND_WELCOME'], FILTER_VALIDATE_BOOLEAN )
+                );
+            } catch ( Exception $e ) {
+                if ( count( $list_id ) < 2 ) {
+                    output_error_message( MC_DEFAULT_ERROR_MESSAGE );
+                }
+            }
+        }
     }
 
     // Success! Yay! Now it is time to let the script know that everything is swell
